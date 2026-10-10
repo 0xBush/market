@@ -34,7 +34,7 @@ An order is `id`, `name`, `quantity`, `created_at`, `updated_at`.
 
 A request hits the handler, the handler calls the service, the service calls the repository, the repository calls sqlc. Interfaces sit with the caller.
 
-Each module registers its own routes on the mux (`Handler.Register`) and maps its own errors to HTTP. `internal/server` only mounts `/healthz`, `/readyz`, and middleware.
+Each module registers its own routes on the mux (`Handler.Register`) and maps its own errors to HTTP. `internal/server` mounts `/healthz`, `/readyz`, middleware, and the modules in `routes.go`. `cmd/api` is process bootstrap only.
 
 ## Run locally
 

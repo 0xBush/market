@@ -12,19 +12,14 @@ import (
 	"market/internal/httputil"
 )
 
-type Registrar interface {
-	Register(*http.ServeMux)
-}
-
 type Server struct {
-	log     *slog.Logger
-	pool    *pgxpool.Pool
-	modules []Registrar
-	http    *http.Server
+	log  *slog.Logger
+	pool *pgxpool.Pool
+	http *http.Server
 }
 
-func New(addr string, log *slog.Logger, pool *pgxpool.Pool, modules ...Registrar) *Server {
-	s := &Server{log: log, pool: pool, modules: modules}
+func New(addr string, log *slog.Logger, pool *pgxpool.Pool) *Server {
+	s := &Server{log: log, pool: pool}
 	s.http = &http.Server{
 		Addr:              addr,
 		Handler:           s.routes(),

@@ -9,8 +9,6 @@ import (
 
 	"market/internal/config"
 	"market/internal/database"
-	"market/internal/database/sqlc"
-	"market/internal/order"
 	"market/internal/server"
 )
 
@@ -38,8 +36,7 @@ func run() int {
 	}
 	defer pool.Close()
 
-	orders := order.NewHandler(order.NewService(order.NewRepository(sqlc.New(pool))), log)
-	if err := server.New(cfg.HTTPAddr, log, pool, orders).Run(ctx); err != nil {
+	if err := server.New(cfg.HTTPAddr, log, pool).Run(ctx); err != nil {
 		log.Error("server", "err", err)
 		return 1
 	}
