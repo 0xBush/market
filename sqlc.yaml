@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/order/queries.sql"
+    schema: "migrations"
+    gen:
+      go:
+        package: "sqlc"
+        out: "internal/database/sqlc"
+        sql_package: "pgx/v5"
+        emit_empty_slices: true
+        emit_pointers_for_null_types: true
+        query_parameter_limit: 3
+        overrides:
+          - db_type: "pg_catalog.timestamptz"
+            go_type: "time.Time"
+          - db_type: "timestamptz"
+            go_type: "time.Time"
