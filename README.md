@@ -2,17 +2,16 @@
 
 Go REST API for a marketplace. The first resource is **orders**.
 
-The HTTP API is small. The layout is the pattern for the next feature: one package under `internal/`, sqlc queries, goose migrations, `net/http`.
+The HTTP API is small. The layout is the pattern for the next feature: one package under `internal/`, sqlc queries, goose migrations, chi.
 
 ## Stack
 
-- `net/http` ServeMux
+- chi router (`net/http` underneath)
+- `go-chi/httplog` for slog access logs and panic recover
 - Postgres 18 with `pgx/v5`
 - sqlc for typed queries
 - goose for migrations
 - `log/slog`
-
-No ORM, no auth, no tenancy.
 
 ## Layout
 
@@ -25,7 +24,7 @@ internal/database
   migrate.go     goose runner
   sqlc/          generated code (committed)
 internal/httputil
-internal/server  mux, middleware, shutdown
+internal/server  chi router, shutdown
 internal/order   domain, repository, service, HTTP
 migrations/      schema (sqlc reads this too)
 ```
@@ -34,7 +33,7 @@ An order is `id`, `name`, `quantity`, `created_at`, `updated_at`.
 
 A request hits the handler, the handler calls the service, the service calls the repository, the repository calls sqlc. Interfaces sit with the caller.
 
-Each module registers its own routes on the mux (`Handler.Register`) and maps its own errors to HTTP. `internal/server` mounts `/healthz`, `/readyz`, middleware, and the modules in `routes.go`. `cmd/api` is process bootstrap only.
+Each module registers its own routes on a `chi.Router` (`Handler.Register`) and maps its own errors to HTTP. `internal/server` mounts `/healthz`, `/readyz`, chi middleware, and the modules in `routes.go`. `cmd/api` is process bootstrap only.
 
 ## Run locally
 

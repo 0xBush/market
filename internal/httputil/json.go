@@ -18,11 +18,14 @@ func WriteError(w http.ResponseWriter, status int, msg string) {
 
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	const LIMIT = 1 << 20
+
 	r.Body = http.MaxBytesReader(w, r.Body, LIMIT)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
+
 	if err := dec.Decode(dst); err != nil {
 		return fmt.Errorf("invalid JSON body: %w", err)
 	}
+
 	return nil
 }
