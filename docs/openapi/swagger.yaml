@@ -32,6 +32,11 @@ definitions:
           $ref: '#/definitions/order.Order'
         type: array
     type: object
+  server.HealthBody:
+    properties:
+      status:
+        type: string
+    type: object
 info:
   contact: {}
   description: Marketplace REST API
@@ -47,9 +52,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/server.HealthBody'
       summary: Liveness
       tags:
       - ops
@@ -140,16 +143,14 @@ paths:
       - orders
   /readyz:
     get:
-      description: Postgres answers ping
+      description: DB answers ping
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/server.HealthBody'
         "503":
           description: Service Unavailable
           schema:

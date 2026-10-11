@@ -2,7 +2,7 @@
 
 Go REST API for a marketplace. The first resource is **orders**.
 
-The HTTP API is small. The layout is the pattern for the next feature: one package under `internal/`, sqlc queries, goose migrations, chi.
+The HTTP API is small. A domain resource is one package under `internal/` with sqlc queries, a service, and HTTP.
 
 ## Stack
 
@@ -34,7 +34,7 @@ An order is `id`, `name`, `quantity`, `created_at`, `updated_at`.
 
 A request hits the handler, the handler calls the service, the service calls the repository, the repository calls sqlc. Interfaces sit with the caller.
 
-Each module registers its own routes on a `chi.Router` (`Handler.Register`) and maps its own errors to HTTP. `internal/server` mounts `/healthz`, `/readyz`, chi middleware, and the modules in `routes.go`. `cmd/api` is process bootstrap only.
+`internal/server` mounts `/healthz`, `/readyz`, and orders. `cmd/api` is process bootstrap only.
 
 ## Run locally
 
@@ -67,7 +67,7 @@ New migration:
 just migrate-new add_something
 ```
 
-After you change `internal/order/queries.sql` or a migration:
+After you change `internal/order/order.sql` or a migration:
 
 ```sh
 just sqlc

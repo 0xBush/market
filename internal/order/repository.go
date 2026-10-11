@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+
 	"market/internal/database/sqlc"
 )
 

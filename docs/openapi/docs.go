@@ -29,10 +29,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/server.HealthBody"
                         }
                     }
                 }
@@ -169,7 +166,7 @@ const docTemplate = `{
         },
         "/readyz": {
             "get": {
-                "description": "Postgres answers ping",
+                "description": "DB answers ping",
                 "produces": [
                     "application/json"
                 ],
@@ -181,10 +178,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/server.HealthBody"
                         }
                     },
                     "503": {
@@ -245,6 +239,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/order.Order"
                     }
+                }
+            }
+        },
+        "server.HealthBody": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
                 }
             }
         }

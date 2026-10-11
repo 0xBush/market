@@ -27,7 +27,7 @@ func run() int {
 	}
 
 	ctx := context.Background()
-	pool, err := database.New(ctx, cfg.DatabaseURL)
+	pool, err := database.New(ctx, cfg.Database.URL)
 	if err != nil {
 		log.Error("database", "err", err)
 		return 1
@@ -35,7 +35,7 @@ func run() int {
 	defer pool.Close()
 
 	if *down {
-		if err := database.MigrateDown(ctx, pool, cfg.MigrationsDir); err != nil {
+		if err := database.MigrateDown(ctx, pool, cfg.Migrations.Dir); err != nil {
 			log.Error("migrate down", "err", err)
 			return 1
 		}
@@ -43,7 +43,7 @@ func run() int {
 		return 0
 	}
 
-	if err := database.MigrateUp(ctx, pool, cfg.MigrationsDir); err != nil {
+	if err := database.MigrateUp(ctx, pool, cfg.Migrations.Dir); err != nil {
 		log.Error("migrate up", "err", err)
 		return 1
 	}

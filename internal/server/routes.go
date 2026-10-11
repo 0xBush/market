@@ -23,8 +23,7 @@ func (s *Server) routes() http.Handler {
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
-	orders := order.NewHandler(order.NewService(order.NewRepository(sqlc.New(s.pool))), s.log)
-	orders.Register(r)
+	order.NewHandler(order.NewService(order.NewRepository(sqlc.New(s.pool))), s.log).Register(r)
 
 	return r
 }

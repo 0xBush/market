@@ -29,19 +29,19 @@ func run() int {
 		log.Error("config", "err", err)
 		return 1
 	}
-	log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
+	log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.Log.Level}))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := database.New(ctx, cfg.DatabaseURL)
+	pool, err := database.New(ctx, cfg.Database.URL)
 	if err != nil {
 		log.Error("database", "err", err)
 		return 1
 	}
 	defer pool.Close()
 
-	if err := server.New(cfg.HTTPAddr, log, pool).Run(ctx); err != nil {
+	if err := server.New(cfg, log, pool).Run(ctx); err != nil {
 		log.Error("server", "err", err)
 		return 1
 	}
