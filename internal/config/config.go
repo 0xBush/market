@@ -20,7 +20,8 @@ type Config struct {
 }
 
 type HTTP struct {
-	Addr string
+	Addr        string
+	CORSOrigins []string
 }
 
 type Database struct {
@@ -49,17 +50,21 @@ type Auth struct {
 func Load() (Config, error) {
 	var cfg Config
 
+	// Set defaults
 	cfg.HTTP.Addr = env("HTTP_ADDR", ":8080")
+	cfg.HTTP.CORSOrigins = []string{"http://localhost:5173", "http://localhost:3000"}
 	cfg.Migrations.Dir = env("MIGRATIONS_DIR", "migrations")
 	cfg.Log.Level = slog.LevelInfo
 	cfg.Auth.AccessTTL = 15 * time.Minute
 	cfg.Auth.RefreshTTL = 7 * 24 * time.Hour
 
+	// Override if provided catching all errors
 	err := errors.Join(
 		envRequired("DATABASE_URL", &cfg.Database.URL),
 		envRequired("REDIS_URL", &cfg.Redis.URL),
 		envRequired("JWT_SECRET", &cfg.Auth.JWTSecret),
 
+		envParse("CORS_ORIGINS", &cfg.HTTP.CORSOrigins, parseComma),
 		envParse("LOG_LEVEL", &cfg.Log.Level, parseLogging),
 		envParse("ACCESS_TTL", &cfg.Auth.AccessTTL, time.ParseDuration),
 		envParse("REFRESH_TTL", &cfg.Auth.RefreshTTL, time.ParseDuration),
@@ -103,6 +108,18 @@ func envParse[T any](key string, v *T, parse func(string) (T, error)) error {
 
 	*v = x
 	return nil
+}
+
+func parseComma(s string) ([]string, error) {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out, nil
 }
 
 func parseLogging(s string) (slog.Level, error) {
