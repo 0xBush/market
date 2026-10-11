@@ -24,6 +24,8 @@ definitions:
         type: integer
       updated_at:
         type: string
+      user_id:
+        type: integer
     type: object
   order.OrderList:
     properties:
@@ -37,9 +39,25 @@ definitions:
       status:
         type: string
     type: object
+  user.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+  user.credentialsRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
 info:
   contact: {}
-  description: Marketplace REST API
+  description: Marketplace REST API. Access JWT and refresh token are HttpOnly cookies.
   title: Market API
   version: "1.0"
 paths:
@@ -56,9 +74,81 @@ paths:
       summary: Liveness
       tags:
       - ops
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Set access/refresh cookies
+      parameters:
+      - description: Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.credentialsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Login
+      tags:
+      - auth
+  /logout:
+    post:
+      description: Revoke refresh token and clear cookies
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Logout
+      tags:
+      - auth
+  /me:
+    get:
+      description: Return the account for the access cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Current user
+      tags:
+      - auth
   /orders:
     get:
-      description: List all orders
+      description: List orders belonging to the current user
       produces:
       - application/json
       responses:
@@ -66,6 +156,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/order.OrderList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
         "500":
           description: Internal Server Error
           schema:
@@ -76,7 +170,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new order
+      description: Create a new order for the current user
       parameters:
       - description: Order to create
         in: body
@@ -99,6 +193,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.ErrorBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
         "422":
           description: Unprocessable Entity
           schema:
@@ -112,7 +210,7 @@ paths:
       - orders
   /orders/{id}:
     get:
-      description: Get an order by ID
+      description: Get an order by ID belonging to the current user
       parameters:
       - description: Order ID
         in: path
@@ -128,6 +226,10 @@ paths:
             $ref: '#/definitions/order.Order'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/httputil.ErrorBody'
         "404":
@@ -158,4 +260,59 @@ paths:
       summary: Readiness
       tags:
       - ops
+  /refresh:
+    post:
+      description: Rotate refresh cookie and set a new access cookie
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Refresh
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create an account and set access/refresh cookies
+      parameters:
+      - description: Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.credentialsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Register
+      tags:
+      - auth
 swagger: "2.0"

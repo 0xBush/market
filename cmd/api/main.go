@@ -15,7 +15,7 @@ import (
 
 // @title Market API
 // @version 1.0
-// @description Marketplace REST API
+// @description Marketplace REST API. Access JWT and refresh token are HttpOnly cookies.
 // @BasePath /
 func main() {
 	os.Exit(run())

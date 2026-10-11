@@ -10,13 +10,13 @@ import (
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (name, quantity)
-VALUES ($1, $2)
-RETURNING id, name, quantity, created_at, updated_at
+INSERT INTO orders (name, quantity, user_id)
+VALUES ($1, $2, $3)
+RETURNING id, name, quantity, created_at, updated_at, user_id
 `
 
-func (q *Queries) CreateOrder(ctx context.Context, name string, quantity int32) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder, name, quantity)
+func (q *Queries) CreateOrder(ctx context.Context, name string, quantity int32, userID int64) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder, name, quantity, userID)
 	var i Order
 	err := row.Scan(
 		&i.ID,
@@ -24,18 +24,20 @@ func (q *Queries) CreateOrder(ctx context.Context, name string, quantity int32) 
 		&i.Quantity,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const getOrder = `-- name: GetOrder :one
-SELECT id, name, quantity, created_at, updated_at
+SELECT id, name, quantity, created_at, updated_at, user_id
 FROM orders
 WHERE id = $1
+  AND user_id = $2
 `
 
-func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
-	row := q.db.QueryRow(ctx, getOrder, id)
+func (q *Queries) GetOrder(ctx context.Context, iD int64, userID int64) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrder, iD, userID)
 	var i Order
 	err := row.Scan(
 		&i.ID,
@@ -43,18 +45,20 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 		&i.Quantity,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const listOrders = `-- name: ListOrders :many
-SELECT id, name, quantity, created_at, updated_at
+SELECT id, name, quantity, created_at, updated_at, user_id
 FROM orders
+WHERE user_id = $1
 ORDER BY id
 `
 
-func (q *Queries) ListOrders(ctx context.Context) ([]Order, error) {
-	rows, err := q.db.Query(ctx, listOrders)
+func (q *Queries) ListOrders(ctx context.Context, userID int64) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listOrders, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +72,7 @@ func (q *Queries) ListOrders(ctx context.Context) ([]Order, error) {
 			&i.Quantity,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

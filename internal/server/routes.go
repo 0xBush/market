@@ -10,6 +10,7 @@ import (
 
 	"market/internal/database/sqlc"
 	"market/internal/order"
+	"market/internal/user"
 )
 
 func (s *Server) routes() http.Handler {
@@ -23,7 +24,16 @@ func (s *Server) routes() http.Handler {
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
-	order.NewHandler(order.NewService(order.NewRepository(sqlc.New(s.pool))), s.log).Register(r)
+	q := sqlc.New(s.pool)
+	users := user.NewHandler(user.NewService(user.NewRepository(s.pool, q), s.cfg.Auth), s.cfg.Auth, s.log)
+	orders := order.NewHandler(order.NewService(order.NewRepository(q)), s.log)
+
+	users.RegisterPublic(r)
+	r.Group(func(r chi.Router) {
+		r.Use(users.RequireAuth)
+		users.RegisterAuthed(r)
+		orders.Register(r)
+	})
 
 	return r
 }

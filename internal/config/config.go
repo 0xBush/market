@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -13,6 +15,7 @@ type Config struct {
 	Database   Database
 	Log        Log
 	Migrations Migrations
+	Auth       Auth
 }
 
 type HTTP struct {
@@ -31,11 +34,22 @@ type Migrations struct {
 	Dir string
 }
 
+type Auth struct {
+	JWTSecret    string
+	AccessTTL    time.Duration
+	RefreshTTL   time.Duration
+	CookieSecure bool
+}
+
 func defaults() Config {
 	return Config{
 		HTTP:       HTTP{Addr: ":8080"},
 		Log:        Log{Level: slog.LevelInfo},
 		Migrations: Migrations{Dir: "migrations"},
+		Auth: Auth{
+			AccessTTL:  15 * time.Minute,
+			RefreshTTL: 7 * 24 * time.Hour,
+		},
 	}
 }
 
@@ -47,7 +61,11 @@ func Load() (Config, error) {
 
 	err := errors.Join(
 		envRequired("DATABASE_URL", &cfg.Database.URL),
+		envRequired("JWT_SECRET", &cfg.Auth.JWTSecret),
 		env("LOG_LEVEL", &cfg.Log.Level, parseLevel),
+		env("ACCESS_TTL", &cfg.Auth.AccessTTL, parseDuration),
+		env("REFRESH_TTL", &cfg.Auth.RefreshTTL, parseDuration),
+		env("COOKIE_SECURE", &cfg.Auth.CookieSecure, strconv.ParseBool),
 	)
 	if err != nil {
 		return Config{}, err
@@ -93,4 +111,15 @@ func parseLevel(s string) (slog.Level, error) {
 		return 0, err
 	}
 	return level, nil
+}
+
+func parseDuration(s string) (time.Duration, error) {
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, err
+	}
+	if d <= 0 {
+		return 0, fmt.Errorf("must be positive")
+	}
+	return d, nil
 }

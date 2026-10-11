@@ -8,9 +8,9 @@ import (
 )
 
 type repo interface {
-	Create(ctx context.Context, name string, quantity int32) (Order, error)
-	Get(ctx context.Context, id int64) (Order, error)
-	List(ctx context.Context) ([]Order, error)
+	Create(ctx context.Context, userID int64, name string, quantity int32) (Order, error)
+	Get(ctx context.Context, id, userID int64) (Order, error)
+	List(ctx context.Context, userID int64) ([]Order, error)
 }
 
 type Service struct {
@@ -29,15 +29,15 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (Order, error) {
 	if in.Quantity < 1 {
 		return Order{}, fmt.Errorf("%w: quantity must be at least 1", ErrInvalid)
 	}
-	return s.repo.Create(ctx, name, in.Quantity)
+	return s.repo.Create(ctx, in.UserID, name, in.Quantity)
 }
 
-func (s *Service) Get(ctx context.Context, id int64) (Order, error) {
-	return s.repo.Get(ctx, id)
+func (s *Service) Get(ctx context.Context, id, userID int64) (Order, error) {
+	return s.repo.Get(ctx, id, userID)
 }
 
-func (s *Service) List(ctx context.Context) ([]Order, error) {
-	return s.repo.List(ctx)
+func (s *Service) List(ctx context.Context, userID int64) ([]Order, error) {
+	return s.repo.List(ctx, userID)
 }
 
 func validateName(s string) (string, error) {
