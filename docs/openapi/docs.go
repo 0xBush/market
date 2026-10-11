@@ -294,7 +294,7 @@ const docTemplate = `{
         },
         "/readyz": {
             "get": {
-                "description": "DB answers ping",
+                "description": "Postgres and Redis answer ping",
                 "produces": [
                     "application/json"
                 ],

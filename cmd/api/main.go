@@ -41,7 +41,14 @@ func run() int {
 	}
 	defer pool.Close()
 
-	if err := server.New(cfg, log, pool).Run(ctx); err != nil {
+	rdb, err := database.NewRedis(ctx, cfg.Redis.URL)
+	if err != nil {
+		log.Error("redis", "err", err)
+		return 1
+	}
+	defer rdb.Close()
+
+	if err := server.New(cfg, log, pool, rdb).Run(ctx); err != nil {
 		log.Error("server", "err", err)
 		return 1
 	}

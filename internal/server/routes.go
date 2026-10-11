@@ -27,7 +27,7 @@ func (s *Server) routes() http.Handler {
 
 	q := sqlc.New(s.pool)
 	accounts := user.NewService(user.NewRepository(q))
-	sessions := auth.NewHandler(auth.NewService(accounts, auth.NewRepository(s.pool, q), s.cfg.Auth), s.cfg.Auth, s.log)
+	sessions := auth.NewHandler(auth.NewService(accounts, auth.NewRepository(s.rdb), s.cfg.Auth), s.cfg.Auth, s.log)
 	orders := order.NewHandler(order.NewService(order.NewRepository(q)), s.log)
 
 	sessions.RegisterPublic(r)

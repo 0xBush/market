@@ -13,6 +13,7 @@ import (
 type Config struct {
 	HTTP       HTTP
 	Database   Database
+	Redis      Redis
 	Log        Log
 	Migrations Migrations
 	Auth       Auth
@@ -23,6 +24,10 @@ type HTTP struct {
 }
 
 type Database struct {
+	URL string
+}
+
+type Redis struct {
 	URL string
 }
 
@@ -52,7 +57,9 @@ func Load() (Config, error) {
 
 	err := errors.Join(
 		envRequired("DATABASE_URL", &cfg.Database.URL),
+		envRequired("REDIS_URL", &cfg.Redis.URL),
 		envRequired("JWT_SECRET", &cfg.Auth.JWTSecret),
+
 		envParse("LOG_LEVEL", &cfg.Log.Level, parseLogging),
 		envParse("ACCESS_TTL", &cfg.Auth.AccessTTL, time.ParseDuration),
 		envParse("REFRESH_TTL", &cfg.Auth.RefreshTTL, time.ParseDuration),

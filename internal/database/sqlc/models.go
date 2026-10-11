@@ -17,14 +17,6 @@ type Order struct {
 	UserID    int64
 }
 
-type RefreshToken struct {
-	ID        int64
-	UserID    int64
-	TokenHash []byte
-	ExpiresAt time.Time
-	CreatedAt time.Time
-}
-
 type User struct {
 	ID           int64
 	Email        string

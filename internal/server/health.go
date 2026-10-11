@@ -22,10 +22,10 @@ func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 	httputil.WriteJSON(w, http.StatusOK, HealthBody{Status: "ok"})
 }
 
-// readyz reports that DB answers ping.
+// readyz reports that Postgres and Redis answer ping.
 //
 // @Summary      Readiness
-// @Description  DB answers ping
+// @Description  Postgres and Redis answer ping
 // @Tags         ops
 // @Produce      json
 // @Success      200 {object} HealthBody
@@ -33,6 +33,11 @@ func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 // @Router       /readyz [get]
 func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	if err := s.pool.Ping(r.Context()); err != nil {
+		s.log.ErrorContext(r.Context(), "readyz", "err", err)
+		httputil.WriteError(w, http.StatusServiceUnavailable, "not ready")
+		return
+	}
+	if err := s.rdb.Ping(r.Context()).Err(); err != nil {
 		s.log.ErrorContext(r.Context(), "readyz", "err", err)
 		httputil.WriteError(w, http.StatusServiceUnavailable, "not ready")
 		return

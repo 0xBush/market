@@ -45,6 +45,7 @@ func (h *Handler) RequireAuthMiddleware(next http.Handler) http.Handler {
 			httputil.WriteError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+		// TODO: denylist access jti until exp
 
 		next.ServeHTTP(w, r.WithContext(ContextWithUserID(r.Context(), id)))
 	})
@@ -52,11 +53,14 @@ func (h *Handler) RequireAuthMiddleware(next http.Handler) http.Handler {
 
 func signAccessToken(userID int64, secret string, ttl time.Duration) (string, error) {
 	now := time.Now()
+	const base2 = 10
+
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   strconv.FormatInt(userID, 10),
+		Subject:   strconv.FormatInt(userID, base2),
 		IssuedAt:  jwt.NewNumericDate(now),
 		ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
 	})
+
 	return tok.SignedString([]byte(secret))
 }
 

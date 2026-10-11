@@ -84,6 +84,7 @@ func (s *Service) Logout(ctx context.Context, rawRefresh string) error {
 	if rawRefresh == "" {
 		return nil
 	}
+	// TODO: denylist current access jti until exp
 	return s.repo.DeleteRefresh(ctx, hashRefreshToken(rawRefresh))
 }
 
