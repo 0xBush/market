@@ -13,9 +13,13 @@ import (
 )
 
 type Server struct {
-	cfg  config.Config
-	log  *slog.Logger
+	cfg config.Config
+	log *slog.Logger
+
+	// Currently, we explicitly declare dependency on Postgres for simplicity.
+	// Strategy pattern may suit there if the core SQL database might change later.
 	pool *pgxpool.Pool
+
 	http *http.Server
 }
 

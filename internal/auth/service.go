@@ -9,7 +9,7 @@ import (
 	"github.com/0xbush/market/internal/user"
 )
 
-type accounts interface {
+type accountsSvc interface {
 	Register(ctx context.Context, in user.Credentials) (user.User, error)
 	Authenticate(ctx context.Context, in user.Credentials) (user.User, error)
 	GetByID(ctx context.Context, id int64) (user.User, error)
@@ -22,12 +22,12 @@ type repo interface {
 }
 
 type Service struct {
-	accounts accounts
+	accounts accountsSvc
 	repo     repo
 	cfg      config.Auth
 }
 
-func NewService(accounts accounts, r repo, cfg config.Auth) *Service {
+func NewService(accounts accountsSvc, r repo, cfg config.Auth) *Service {
 	return &Service{accounts: accounts, repo: r, cfg: cfg}
 }
 
