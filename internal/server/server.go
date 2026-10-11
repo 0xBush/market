@@ -51,10 +51,27 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 }
 
+// healthz reports that the process is up.
+//
+// @Summary      Liveness
+// @Description  Process is up
+// @Tags         ops
+// @Produce      json
+// @Success      200 {object} map[string]string
+// @Router       /healthz [get]
 func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 	httputil.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// readyz reports that Postgres answers ping.
+//
+// @Summary      Readiness
+// @Description  Postgres answers ping
+// @Tags         ops
+// @Produce      json
+// @Success      200 {object} map[string]string
+// @Failure      503 {object} httputil.ErrorBody
+// @Router       /readyz [get]
 func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	if err := s.pool.Ping(r.Context()); err != nil {
 		s.log.ErrorContext(r.Context(), "readyz", "err", err)

@@ -5,16 +5,10 @@ import (
 	"time"
 )
 
-var ErrNotFound = errors.New("order not found")
-
-type ValidationError struct {
-	Field string
-	Msg   string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Field + ": " + e.Msg
-}
+var (
+	ErrNotFound = errors.New("order not found")
+	ErrInvalid  = errors.New("invalid input")
+)
 
 type Order struct {
 	ID        int64     `json:"id"`

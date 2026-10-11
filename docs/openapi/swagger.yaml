@@ -1,0 +1,160 @@
+basePath: /
+definitions:
+  httputil.ErrorBody:
+    properties:
+      error:
+        type: string
+    type: object
+  order.CreateOrderRequest:
+    properties:
+      name:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  order.Order:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  order.OrderList:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/order.Order'
+        type: array
+    type: object
+info:
+  contact: {}
+  description: Marketplace REST API
+  title: Market API
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      description: Process is up
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Liveness
+      tags:
+      - ops
+  /orders:
+    get:
+      description: List all orders
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/order.OrderList'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: List orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Create a new order
+      parameters:
+      - description: Order to create
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/order.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              description: /orders/{id}
+              type: string
+          schema:
+            $ref: '#/definitions/order.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Create order
+      tags:
+      - orders
+  /orders/{id}:
+    get:
+      description: Get an order by ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/order.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Get order
+      tags:
+      - orders
+  /readyz:
+    get:
+      description: Postgres answers ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/httputil.ErrorBody'
+      summary: Readiness
+      tags:
+      - ops
+swagger: "2.0"

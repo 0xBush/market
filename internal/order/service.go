@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -26,7 +27,7 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (Order, error) {
 		return Order{}, err
 	}
 	if in.Quantity < 1 {
-		return Order{}, &ValidationError{Field: "quantity", Msg: "must be at least 1"}
+		return Order{}, fmt.Errorf("%w: quantity must be at least 1", ErrInvalid)
 	}
 	return s.repo.Create(ctx, name, in.Quantity)
 }
@@ -43,7 +44,7 @@ func validateName(s string) (string, error) {
 	s = strings.TrimSpace(s)
 	n := utf8.RuneCountInString(s)
 	if n < 1 || n > 100 {
-		return "", &ValidationError{Field: "name", Msg: "must be 1-100 characters"}
+		return "", fmt.Errorf("%w: name must be 1-100 characters", ErrInvalid)
 	}
 	return s, nil
 }

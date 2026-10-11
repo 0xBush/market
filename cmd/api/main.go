@@ -7,11 +7,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "market/docs/openapi"
 	"market/internal/config"
 	"market/internal/database"
 	"market/internal/server"
 )
 
+// @title Market API
+// @version 1.0
+// @description Marketplace REST API
+// @BasePath /
 func main() {
 	os.Exit(run())
 }

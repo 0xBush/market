@@ -27,6 +27,7 @@ internal/httputil
 internal/server  chi router, shutdown
 internal/order   domain, repository, service, HTTP
 migrations/      schema (sqlc reads this too)
+docs/            generated Swagger (committed; `just swagger`)
 ```
 
 An order is `id`, `name`, `quantity`, `created_at`, `updated_at`.
@@ -40,10 +41,16 @@ Each module registers its own routes on a `chi.Router` (`Handler.Register`) and 
 Needs Docker, Go 1.26, and [just](https://github.com/casey/just).
 
 ```sh
-cp .env.example .env
-just up
-just migrate
+just setup
 just run
+```
+
+`just setup` copies `.env` if missing, starts Postgres, and applies migrations.
+
+Stop the stack and remove `build/`:
+
+```sh
+just cleanup
 ```
 
 Two binaries:
@@ -66,12 +73,21 @@ After you change `internal/order/queries.sql` or a migration:
 just sqlc
 ```
 
+After you change swag comments on handlers:
+
+```sh
+just swagger
+```
+
+That regenerates `docs/`. Serve the UI at `/swagger/index.html` while the API is running.
+
 ## API
 
 | Method | Path | Action |
 |---|---|---|
 | GET | `/healthz` | process is up |
 | GET | `/readyz` | Postgres answers ping |
+| GET | `/swagger/index.html` | Swagger UI |
 | POST | `/orders` | create |
 | GET | `/orders` | list |
 | GET | `/orders/{id}` | get one |

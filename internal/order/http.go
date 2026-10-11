@@ -28,6 +28,15 @@ func NewHandler(svc service, log *slog.Logger) *Handler {
 	return &Handler{svc: svc, log: log}
 }
 
+type CreateOrderRequest struct {
+	Name     string `json:"name"`
+	Quantity int32  `json:"quantity"`
+}
+
+type OrderList struct {
+	Items []Order `json:"items"`
+}
+
 func (h *Handler) Register(r chi.Router) {
 	r.Post("/orders", h.create)
 	r.Get("/orders", h.list)
@@ -35,10 +44,9 @@ func (h *Handler) Register(r chi.Router) {
 }
 
 func (h *Handler) mapErrors(w http.ResponseWriter, r *http.Request, err error) {
-	var ve *ValidationError
 	switch {
-	case errors.As(err, &ve):
-		httputil.WriteError(w, http.StatusUnprocessableEntity, ve.Error())
+	case errors.Is(err, ErrInvalid):
+		httputil.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, ErrNotFound):
 		httputil.WriteError(w, http.StatusNotFound, "order not found")
 	default:
@@ -47,11 +55,22 @@ func (h *Handler) mapErrors(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
+// create stores a new order.
+//
+// @Summary      Create order
+// @Description  Create a new order
+// @Tags         orders
+// @Accept       json
+// @Produce      json
+// @Param        request body CreateOrderRequest true "Order to create"
+// @Success      201 {object} Order
+// @Header       201 {string} Location "/orders/{id}"
+// @Failure      400 {object} httputil.ErrorBody
+// @Failure      422 {object} httputil.ErrorBody
+// @Failure      500 {object} httputil.ErrorBody
+// @Router       /orders [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Name     string `json:"name"`
-		Quantity int32  `json:"quantity"`
-	}
+	var req CreateOrderRequest
 	if err := httputil.ReadJSON(w, r, &req); err != nil {
 		httputil.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -66,8 +85,20 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteJSON(w, http.StatusCreated, o)
 }
 
+// get returns one order by ID.
+//
+// @Summary      Get order
+// @Description  Get an order by ID
+// @Tags         orders
+// @Produce      json
+// @Param        id path int true "Order ID"
+// @Success      200 {object} Order
+// @Failure      400 {object} httputil.ErrorBody
+// @Failure      404 {object} httputil.ErrorBody
+// @Failure      500 {object} httputil.ErrorBody
+// @Router       /orders/{id} [get]
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil || id < 1 {
 		httputil.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
@@ -81,11 +112,28 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	httputil.WriteJSON(w, http.StatusOK, o)
 }
 
+func parseID(r *http.Request) (int64, error) {
+	const base = 10
+	const bitSize = 64
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), base, bitSize)
+
+	return id, err
+}
+
+// list returns all orders.
+//
+// @Summary      List orders
+// @Description  List all orders
+// @Tags         orders
+// @Produce      json
+// @Success      200 {object} OrderList
+// @Failure      500 {object} httputil.ErrorBody
+// @Router       /orders [get]
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	items, err := h.svc.List(r.Context())
 	if err != nil {
 		h.mapErrors(w, r, err)
 		return
 	}
-	httputil.WriteJSON(w, http.StatusOK, map[string]any{"items": items})
+	httputil.WriteJSON(w, http.StatusOK, OrderList{Items: items})
 }

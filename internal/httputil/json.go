@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+type ErrorBody struct {
+	Error string `json:"error"`
+}
+
 func WriteJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -13,13 +17,13 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func WriteError(w http.ResponseWriter, status int, msg string) {
-	WriteJSON(w, status, map[string]string{"error": msg})
+	WriteJSON(w, status, ErrorBody{Error: msg})
 }
 
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
-	const LIMIT = 1 << 20
+	const limit = 1 << 20
 
-	r.Body = http.MaxBytesReader(w, r.Body, LIMIT)
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 
