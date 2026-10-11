@@ -29,6 +29,7 @@ func run() int {
 		log.Error("config", "err", err)
 		return 1
 	}
+	
 	log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.Log.Level}))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
