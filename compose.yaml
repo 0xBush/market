@@ -1,3 +1,15 @@
+x-app: &app
+  build: .
+  image: market:local
+  environment:
+    DATABASE_URL: postgres://market:market@postgres:5432/market?sslmode=disable
+    REDIS_URL: redis://valkey:6379/0
+    JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+    HTTP_ADDR: ":8080"
+  depends_on: &depends-postgres
+    postgres:
+      condition: service_healthy
+
 services:
   postgres:
     image: postgres:18
@@ -27,6 +39,22 @@ services:
       interval: 2s
       timeout: 5s
       retries: 10
+
+  migrate:
+    <<: *app
+    entrypoint: ["/migrate"]
+    restart: "no"
+
+  api:
+    <<: *app
+    ports:
+      - "8080:8080"
+    depends_on:
+      <<: *depends-postgres
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

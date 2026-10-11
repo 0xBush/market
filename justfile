@@ -20,7 +20,6 @@ cleanup:
 setup:
     [ -f .env ] || cp .env.example .env
     just up
-    just migrate
 
 run:
     go run ./cmd/api
