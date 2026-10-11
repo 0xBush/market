@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/0xbush/market/internal/auth"
 	"github.com/0xbush/market/internal/httputil"
-	"github.com/0xbush/market/internal/user"
 )
 
 type service interface {
@@ -57,7 +57,7 @@ func (h *Handler) mapErrors(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func callerID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-	id, ok := user.UserIDFromContext(r.Context())
+	id, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		httputil.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return 0, false

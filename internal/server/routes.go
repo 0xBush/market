@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/httplog/v3"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	"github.com/0xbush/market/internal/auth"
 	"github.com/0xbush/market/internal/database/sqlc"
 	"github.com/0xbush/market/internal/order"
 	"github.com/0xbush/market/internal/user"
@@ -25,13 +26,14 @@ func (s *Server) routes() http.Handler {
 	))
 
 	q := sqlc.New(s.pool)
-	users := user.NewHandler(user.NewService(user.NewRepository(s.pool, q), s.cfg.Auth), s.cfg.Auth, s.log)
+	accounts := user.NewService(user.NewRepository(q))
+	sessions := auth.NewHandler(auth.NewService(accounts, auth.NewRepository(s.pool, q), s.cfg.Auth), s.cfg.Auth, s.log)
 	orders := order.NewHandler(order.NewService(order.NewRepository(q)), s.log)
 
-	users.RegisterPublic(r)
+	sessions.RegisterPublic(r)
 	r.Group(func(r chi.Router) {
-		r.Use(users.RequireAuth)
-		users.RegisterAuthed(r)
+		r.Use(sessions.RequireAuthMiddleware)
+		sessions.RegisterAuthed(r)
 		orders.Register(r)
 	})
 

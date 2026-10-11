@@ -55,7 +55,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.credentialsRequest"
+                            "$ref": "#/definitions/auth.credentialsRequest"
                         }
                     }
                 ],
@@ -364,7 +364,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.credentialsRequest"
+                            "$ref": "#/definitions/auth.credentialsRequest"
                         }
                     }
                 ],
@@ -404,6 +404,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.credentialsRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "httputil.ErrorBody": {
             "type": "object",
             "properties": {
@@ -476,17 +487,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
-                }
-            }
-        },
-        "user.credentialsRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
                 }
             }
         }

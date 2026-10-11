@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func UserIDFromContext(ctx context.Context) (int64, bool) {
 	return id, ok && id > 0
 }
 
-func (h *Handler) RequireAuth(next http.Handler) http.Handler {
+func (h *Handler) RequireAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(accessCookie)
 		if err != nil || c.Value == "" {
@@ -40,7 +40,7 @@ func (h *Handler) RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		id, err := parseAccessToken(c.Value, h.auth.JWTSecret)
+		id, err := parseAccessToken(c.Value, h.cfg.JWTSecret)
 		if err != nil {
 			httputil.WriteError(w, http.StatusUnauthorized, "unauthorized")
 			return
@@ -98,9 +98,9 @@ func hashRefreshToken(raw string) []byte {
 	return sum[:]
 }
 
-func setAuthCookies(w http.ResponseWriter, pair TokenPair, auth config.Auth) {
-	setCookie(w, accessCookie, pair.Access, auth.AccessTTL, auth.CookieSecure)
-	setCookie(w, refreshCookie, pair.Refresh, auth.RefreshTTL, auth.CookieSecure)
+func setAuthCookies(w http.ResponseWriter, pair TokenPair, cfg config.Auth) {
+	setCookie(w, accessCookie, pair.Access, cfg.AccessTTL, cfg.CookieSecure)
+	setCookie(w, refreshCookie, pair.Refresh, cfg.RefreshTTL, cfg.CookieSecure)
 }
 
 func clearAuthCookies(w http.ResponseWriter, secure bool) {

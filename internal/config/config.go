@@ -41,31 +41,22 @@ type Auth struct {
 	CookieSecure bool
 }
 
-func defaults() Config {
-	return Config{
-		HTTP:       HTTP{Addr: ":8080"},
-		Log:        Log{Level: slog.LevelInfo},
-		Migrations: Migrations{Dir: "migrations"},
-		Auth: Auth{
-			AccessTTL:  15 * time.Minute,
-			RefreshTTL: 7 * 24 * time.Hour,
-		},
-	}
-}
-
 func Load() (Config, error) {
-	cfg := defaults()
+	var cfg Config
 
-	envString("HTTP_ADDR", &cfg.HTTP.Addr)
-	envString("MIGRATIONS_DIR", &cfg.Migrations.Dir)
+	cfg.HTTP.Addr = env("HTTP_ADDR", ":8080")
+	cfg.Migrations.Dir = env("MIGRATIONS_DIR", "migrations")
+	cfg.Log.Level = slog.LevelInfo
+	cfg.Auth.AccessTTL = 15 * time.Minute
+	cfg.Auth.RefreshTTL = 7 * 24 * time.Hour
 
 	err := errors.Join(
 		envRequired("DATABASE_URL", &cfg.Database.URL),
 		envRequired("JWT_SECRET", &cfg.Auth.JWTSecret),
-		env("LOG_LEVEL", &cfg.Log.Level, parseLevel),
-		env("ACCESS_TTL", &cfg.Auth.AccessTTL, parseDuration),
-		env("REFRESH_TTL", &cfg.Auth.RefreshTTL, parseDuration),
-		env("COOKIE_SECURE", &cfg.Auth.CookieSecure, strconv.ParseBool),
+		envParse("LOG_LEVEL", &cfg.Log.Level, parseLogging),
+		envParse("ACCESS_TTL", &cfg.Auth.AccessTTL, time.ParseDuration),
+		envParse("REFRESH_TTL", &cfg.Auth.RefreshTTL, time.ParseDuration),
+		envParse("COOKIE_SECURE", &cfg.Auth.CookieSecure, strconv.ParseBool),
 	)
 	if err != nil {
 		return Config{}, err
@@ -74,10 +65,12 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-func envString(key string, v *string) {
+func env(key, defaults string) string {
 	if s := os.Getenv(key); s != "" {
-		*v = s
+		return s
 	}
+
+	return defaults
 }
 
 func envRequired(key string, v *string) error {
@@ -90,7 +83,7 @@ func envRequired(key string, v *string) error {
 	return nil
 }
 
-func env[T any](key string, v *T, parse func(string) (T, error)) error {
+func envParse[T any](key string, v *T, parse func(string) (T, error)) error {
 	s := os.Getenv(key)
 	if s == "" {
 		return nil
@@ -105,21 +98,10 @@ func env[T any](key string, v *T, parse func(string) (T, error)) error {
 	return nil
 }
 
-func parseLevel(s string) (slog.Level, error) {
+func parseLogging(s string) (slog.Level, error) {
 	var level slog.Level
 	if err := level.UnmarshalText([]byte(strings.ToLower(s))); err != nil {
 		return 0, err
 	}
 	return level, nil
-}
-
-func parseDuration(s string) (time.Duration, error) {
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return 0, err
-	}
-	if d <= 0 {
-		return 0, fmt.Errorf("must be positive")
-	}
-	return d, nil
 }

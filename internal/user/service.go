@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
-
-	"github.com/0xbush/market/internal/config"
 )
 
 const (
@@ -24,119 +21,54 @@ type repo interface {
 	Create(ctx context.Context, email, passwordHash string) (User, error)
 	GetByEmail(ctx context.Context, email string) (User, string, error)
 	GetByID(ctx context.Context, id int64) (User, error)
-	CreateRefresh(ctx context.Context, userID int64, tokenHash []byte, expiresAt time.Time) error
-	DeleteRefresh(ctx context.Context, tokenHash []byte) error
-	RotateRefresh(ctx context.Context, oldHash, newHash []byte, expiresAt time.Time) (int64, error)
 }
 
 type Service struct {
 	repo repo
-	auth config.Auth
 }
 
-func NewService(r repo, auth config.Auth) *Service {
-	return &Service{repo: r, auth: auth}
+func NewService(r repo) *Service {
+	return &Service{repo: r}
 }
 
-func (s *Service) Register(ctx context.Context, in Credentials) (User, TokenPair, error) {
+func (s *Service) Register(ctx context.Context, in Credentials) (User, error) {
 	email, password, err := validateCredentials(in)
 	if err != nil {
-		return User{}, TokenPair{}, err
+		return User{}, err
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
-		return User{}, TokenPair{}, err
+		return User{}, err
 	}
 
-	u, err := s.repo.Create(ctx, email, string(hash))
-	if err != nil {
-		return User{}, TokenPair{}, err
-	}
-
-	pair, err := s.issueTokens(ctx, u.ID)
-	if err != nil {
-		return User{}, TokenPair{}, err
-	}
-	return u, pair, nil
+	return s.repo.Create(ctx, email, string(hash))
 }
 
-func (s *Service) Login(ctx context.Context, in Credentials) (User, TokenPair, error) {
+func (s *Service) Authenticate(ctx context.Context, in Credentials) (User, error) {
 	email, password, err := validateCredentials(in)
 	if err != nil {
-		return User{}, TokenPair{}, err
+		return User{}, err
 	}
 
 	u, passwordHash, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
-			return User{}, TokenPair{}, ErrUnauthorized
+			return User{}, ErrNotFound
 		}
-		return User{}, TokenPair{}, err
+		return User{}, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)); err != nil {
-		return User{}, TokenPair{}, ErrUnauthorized
+		return User{}, ErrNotFound
 	}
 
-	pair, err := s.issueTokens(ctx, u.ID)
-	if err != nil {
-		return User{}, TokenPair{}, err
-	}
-	return u, pair, nil
+	return u, nil
 }
 
-func (s *Service) Refresh(ctx context.Context, rawRefresh string) (TokenPair, error) {
-	if rawRefresh == "" {
-		return TokenPair{}, ErrUnauthorized
-	}
-
-	raw, hash, err := newRefreshToken()
-	if err != nil {
-		return TokenPair{}, err
-	}
-
-	userID, err := s.repo.RotateRefresh(ctx, hashRefreshToken(rawRefresh), hash, time.Now().Add(s.auth.RefreshTTL))
-	if err != nil {
-		return TokenPair{}, err
-	}
-
-	access, err := signAccessToken(userID, s.auth.JWTSecret, s.auth.AccessTTL)
-	if err != nil {
-		return TokenPair{}, err
-	}
-	return TokenPair{Access: access, Refresh: raw}, nil
-}
-
-func (s *Service) Logout(ctx context.Context, rawRefresh string) error {
-	if rawRefresh == "" {
-		return nil
-	}
-	return s.repo.DeleteRefresh(ctx, hashRefreshToken(rawRefresh))
-}
-
-func (s *Service) Me(ctx context.Context, userID int64) (User, error) {
-	u, err := s.repo.GetByID(ctx, userID)
-	if errors.Is(err, ErrNotFound) {
-		return User{}, ErrUnauthorized
-	}
-	return u, err
-}
-
-func (s *Service) issueTokens(ctx context.Context, userID int64) (TokenPair, error) {
-	access, err := signAccessToken(userID, s.auth.JWTSecret, s.auth.AccessTTL)
-	if err != nil {
-		return TokenPair{}, err
-	}
-	raw, hash, err := newRefreshToken()
-	if err != nil {
-		return TokenPair{}, err
-	}
-	if err := s.repo.CreateRefresh(ctx, userID, hash, time.Now().Add(s.auth.RefreshTTL)); err != nil {
-		return TokenPair{}, err
-	}
-	return TokenPair{Access: access, Refresh: raw}, nil
+func (s *Service) GetByID(ctx context.Context, userID int64) (User, error) {
+	return s.repo.GetByID(ctx, userID)
 }
 
 func validateCredentials(in Credentials) (string, string, error) {

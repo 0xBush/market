@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"context"
@@ -10,24 +10,25 @@ import (
 
 	"github.com/0xbush/market/internal/config"
 	"github.com/0xbush/market/internal/httputil"
+	"github.com/0xbush/market/internal/user"
 )
 
 type service interface {
-	Register(ctx context.Context, in Credentials) (User, TokenPair, error)
-	Login(ctx context.Context, in Credentials) (User, TokenPair, error)
+	Register(ctx context.Context, in user.Credentials) (user.User, TokenPair, error)
+	Login(ctx context.Context, in user.Credentials) (user.User, TokenPair, error)
 	Refresh(ctx context.Context, rawRefresh string) (TokenPair, error)
 	Logout(ctx context.Context, rawRefresh string) error
-	Me(ctx context.Context, userID int64) (User, error)
+	Me(ctx context.Context, userID int64) (user.User, error)
 }
 
 type Handler struct {
-	svc  service
-	auth config.Auth
-	log  *slog.Logger
+	svc service
+	cfg config.Auth
+	log *slog.Logger
 }
 
-func NewHandler(svc service, auth config.Auth, log *slog.Logger) *Handler {
-	return &Handler{svc: svc, auth: auth, log: log}
+func NewHandler(svc service, cfg config.Auth, log *slog.Logger) *Handler {
+	return &Handler{svc: svc, cfg: cfg, log: log}
 }
 
 type credentialsRequest struct {
@@ -48,20 +49,20 @@ func (h *Handler) RegisterAuthed(r chi.Router) {
 
 func (h *Handler) mapErrors(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
-	case errors.Is(err, ErrInvalid):
+	case errors.Is(err, user.ErrInvalid):
 		httputil.WriteError(w, http.StatusUnprocessableEntity, err.Error())
-	case errors.Is(err, ErrConflict):
+	case errors.Is(err, user.ErrConflict):
 		httputil.WriteError(w, http.StatusConflict, "email already taken")
 	case errors.Is(err, ErrUnauthorized):
 		httputil.WriteError(w, http.StatusUnauthorized, "unauthorized")
 	default:
-		h.log.ErrorContext(r.Context(), "user handler", "err", err)
+		h.log.ErrorContext(r.Context(), "auth handler", "err", err)
 		httputil.WriteError(w, http.StatusInternalServerError, "internal error")
 	}
 }
 
-func (h *Handler) writeAuth(w http.ResponseWriter, status int, u User, pair TokenPair) {
-	setAuthCookies(w, pair, h.auth)
+func (h *Handler) writeAuth(w http.ResponseWriter, status int, u user.User, pair TokenPair) {
+	setAuthCookies(w, pair, h.cfg)
 	httputil.WriteJSON(w, status, u)
 }
 
@@ -73,7 +74,7 @@ func (h *Handler) writeAuth(w http.ResponseWriter, status int, u User, pair Toke
 // @Accept       json
 // @Produce      json
 // @Param        request body credentialsRequest true "Credentials"
-// @Success      201 {object} User
+// @Success      201 {object} user.User
 // @Failure      400 {object} httputil.ErrorBody
 // @Failure      409 {object} httputil.ErrorBody
 // @Failure      422 {object} httputil.ErrorBody
@@ -86,7 +87,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, pair, err := h.svc.Register(r.Context(), Credentials{Email: req.Email, Password: req.Password})
+	u, pair, err := h.svc.Register(r.Context(), user.Credentials{Email: req.Email, Password: req.Password})
 	if err != nil {
 		h.mapErrors(w, r, err)
 		return
@@ -102,7 +103,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        request body credentialsRequest true "Credentials"
-// @Success      200 {object} User
+// @Success      200 {object} user.User
 // @Failure      400 {object} httputil.ErrorBody
 // @Failure      401 {object} httputil.ErrorBody
 // @Failure      422 {object} httputil.ErrorBody
@@ -115,7 +116,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, pair, err := h.svc.Login(r.Context(), Credentials{Email: req.Email, Password: req.Password})
+	u, pair, err := h.svc.Login(r.Context(), user.Credentials{Email: req.Email, Password: req.Password})
 	if err != nil {
 		if errors.Is(err, ErrUnauthorized) {
 			httputil.WriteError(w, http.StatusUnauthorized, "invalid email or password")
@@ -148,7 +149,7 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 		h.mapErrors(w, r, err)
 		return
 	}
-	setAuthCookies(w, pair, h.auth)
+	setAuthCookies(w, pair, h.cfg)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -166,7 +167,7 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 		h.mapErrors(w, r, err)
 		return
 	}
-	clearAuthCookies(w, h.auth.CookieSecure)
+	clearAuthCookies(w, h.cfg.CookieSecure)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -176,7 +177,7 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 // @Description  Return the account for the access cookie
 // @Tags         auth
 // @Produce      json
-// @Success      200 {object} User
+// @Success      200 {object} user.User
 // @Failure      401 {object} httputil.ErrorBody
 // @Failure      500 {object} httputil.ErrorBody
 // @Router       /me [get]

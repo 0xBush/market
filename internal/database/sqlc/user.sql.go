@@ -10,16 +10,6 @@ import (
 	"time"
 )
 
-const createRefreshToken = `-- name: CreateRefreshToken :exec
-INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-VALUES ($1, $2, $3)
-`
-
-func (q *Queries) CreateRefreshToken(ctx context.Context, userID int64, tokenHash []byte, expiresAt time.Time) error {
-	_, err := q.db.Exec(ctx, createRefreshToken, userID, tokenHash, expiresAt)
-	return err
-}
-
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, password_hash)
 VALUES ($1, $2)
@@ -36,38 +26,6 @@ func (q *Queries) CreateUser(ctx context.Context, email string, passwordHash str
 	row := q.db.QueryRow(ctx, createUser, email, passwordHash)
 	var i CreateUserRow
 	err := row.Scan(&i.ID, &i.Email, &i.CreatedAt)
-	return i, err
-}
-
-const deleteRefreshToken = `-- name: DeleteRefreshToken :execrows
-DELETE FROM refresh_tokens
-WHERE token_hash = $1
-`
-
-func (q *Queries) DeleteRefreshToken(ctx context.Context, tokenHash []byte) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteRefreshToken, tokenHash)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
-const getRefreshToken = `-- name: GetRefreshToken :one
-SELECT id, user_id, token_hash, expires_at, created_at
-FROM refresh_tokens
-WHERE token_hash = $1
-`
-
-func (q *Queries) GetRefreshToken(ctx context.Context, tokenHash []byte) (RefreshToken, error) {
-	row := q.db.QueryRow(ctx, getRefreshToken, tokenHash)
-	var i RefreshToken
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.TokenHash,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-	)
 	return i, err
 }
 

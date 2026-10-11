@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  auth.credentialsRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
   httputil.ErrorBody:
     properties:
       error:
@@ -48,13 +55,6 @@ definitions:
       id:
         type: integer
     type: object
-  user.credentialsRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
 info:
   contact: {}
   description: Marketplace REST API. Access JWT and refresh token are HttpOnly cookies.
@@ -85,7 +85,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.credentialsRequest'
+          $ref: '#/definitions/auth.credentialsRequest'
       produces:
       - application/json
       responses:
@@ -288,7 +288,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.credentialsRequest'
+          $ref: '#/definitions/auth.credentialsRequest'
       produces:
       - application/json
       responses:
