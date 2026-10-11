@@ -1,4 +1,4 @@
-module market
+module github.com/0xbush/market
 
 go 1.26.0
 

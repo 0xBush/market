@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "market/docs/openapi"
-	"market/internal/config"
-	"market/internal/database"
-	"market/internal/server"
+	_ "github.com/0xbush/market/docs/openapi"
+	"github.com/0xbush/market/internal/config"
+	"github.com/0xbush/market/internal/database"
+	"github.com/0xbush/market/internal/server"
 )
 
 // @title Market API

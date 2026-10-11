@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"market/internal/httputil"
+	"github.com/0xbush/market/internal/httputil"
 )
 
 type HealthBody struct {

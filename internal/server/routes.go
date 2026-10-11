@@ -8,9 +8,9 @@ import (
 	"github.com/go-chi/httplog/v3"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	"market/internal/database/sqlc"
-	"market/internal/order"
-	"market/internal/user"
+	"github.com/0xbush/market/internal/database/sqlc"
+	"github.com/0xbush/market/internal/order"
+	"github.com/0xbush/market/internal/user"
 )
 
 func (s *Server) routes() http.Handler {

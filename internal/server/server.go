@@ -9,7 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"market/internal/config"
+	"github.com/0xbush/market/internal/config"
 )
 
 type Server struct {

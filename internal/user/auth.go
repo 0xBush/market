@@ -12,8 +12,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"market/internal/config"
-	"market/internal/httputil"
+	"github.com/0xbush/market/internal/config"
+	"github.com/0xbush/market/internal/httputil"
 )
 
 const (

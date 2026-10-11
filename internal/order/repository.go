@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"market/internal/database/sqlc"
+	"github.com/0xbush/market/internal/database/sqlc"
 )
 
 type Repository struct {

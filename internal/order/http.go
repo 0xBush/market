@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"market/internal/httputil"
-	"market/internal/user"
+	"github.com/0xbush/market/internal/httputil"
+	"github.com/0xbush/market/internal/user"
 )
 
 type service interface {

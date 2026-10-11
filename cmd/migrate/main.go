@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"os"
 
-	"market/internal/config"
-	"market/internal/database"
+	"github.com/0xbush/market/internal/config"
+	"github.com/0xbush/market/internal/database"
 )
 
 func main() {

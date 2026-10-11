@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"market/internal/database/sqlc"
+	"github.com/0xbush/market/internal/database/sqlc"
 )
 
 type Repository struct {
