@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/0xbush/market/internal/config"
 )
@@ -19,16 +18,11 @@ type Server struct {
 	cfg config.Config
 	log *slog.Logger
 
-	// Currently, we explicitly declare dependency on these databases for simplicity.
-	// Strategy pattern may suit there if the core database might change later.
 	pool *pgxpool.Pool
-
-	// Valkey has complete compatibility with Redis lib.
-	rdb *redis.Client
 }
 
-func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool, rdb *redis.Client) *Server {
-	s := &Server{cfg: cfg, log: log, pool: pool, rdb: rdb}
+func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) *Server {
+	s := &Server{cfg: cfg, log: log, pool: pool}
 	s.http = &http.Server{
 		Addr:              cfg.HTTP.Addr,
 		Handler:           s.routes(),

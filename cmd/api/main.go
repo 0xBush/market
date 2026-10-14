@@ -15,7 +15,7 @@ import (
 
 // @title Market API
 // @version 1.0
-// @description Marketplace REST API. Access JWT and refresh token are HttpOnly cookies.
+// @description Marketplace REST API
 // @BasePath /
 func main() {
 	os.Exit(run())
@@ -29,7 +29,7 @@ func run() int {
 		log.Error("config", "err", err)
 		return 1
 	}
-	
+
 	log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.Log.Level}))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -42,14 +42,7 @@ func run() int {
 	}
 	defer pool.Close()
 
-	rdb, err := database.NewRedis(ctx, cfg.Redis.URL)
-	if err != nil {
-		log.Error("redis", "err", err)
-		return 1
-	}
-	defer rdb.Close()
-
-	if err := server.New(cfg, log, pool, rdb).Run(ctx); err != nil {
+	if err := server.New(cfg, log, pool).Run(ctx); err != nil {
 		log.Error("server", "err", err)
 		return 1
 	}

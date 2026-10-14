@@ -17,16 +17,16 @@ func NewRepository(q *sqlc.Queries) *Repository {
 	return &Repository{q: q}
 }
 
-func (r *Repository) Create(ctx context.Context, userID int64, name string, quantity int32) (Order, error) {
-	row, err := r.q.CreateOrder(ctx, name, quantity, userID)
+func (r *Repository) Create(ctx context.Context, name string, quantity int32) (Order, error) {
+	row, err := r.q.CreateOrder(ctx, name, quantity)
 	if err != nil {
 		return Order{}, err
 	}
 	return toOrder(row), nil
 }
 
-func (r *Repository) Get(ctx context.Context, id, userID int64) (Order, error) {
-	row, err := r.q.GetOrder(ctx, id, userID)
+func (r *Repository) Get(ctx context.Context, id int64) (Order, error) {
+	row, err := r.q.GetOrder(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Order{}, ErrNotFound
 	}
@@ -36,8 +36,8 @@ func (r *Repository) Get(ctx context.Context, id, userID int64) (Order, error) {
 	return toOrder(row), nil
 }
 
-func (r *Repository) List(ctx context.Context, userID int64) ([]Order, error) {
-	rows, err := r.q.ListOrders(ctx, userID)
+func (r *Repository) List(ctx context.Context, limit, offset int32) ([]Order, error) {
+	rows, err := r.q.ListOrders(ctx, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,6 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]Order, error) {
 func toOrder(row sqlc.Order) Order {
 	return Order{
 		ID:        row.ID,
-		UserID:    row.UserID,
 		Name:      row.Name,
 		Quantity:  row.Quantity,
 		CreatedAt: row.CreatedAt,

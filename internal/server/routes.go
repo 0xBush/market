@@ -1,5 +1,3 @@
-// Middleware and core routing logic
-
 package server
 
 import (
@@ -11,16 +9,13 @@ import (
 	"github.com/go-chi/httplog/v3"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	"github.com/0xbush/market/internal/auth"
 	"github.com/0xbush/market/internal/database/sqlc"
 	"github.com/0xbush/market/internal/order"
-	"github.com/0xbush/market/internal/user"
 )
 
 func (s *Server) routes() http.Handler {
 	r := chi.NewRouter()
 
-	// If no origins are available, CORS is disabled.
 	if len(s.cfg.HTTP.CORSOrigins) > 0 {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   s.cfg.HTTP.CORSOrigins,
@@ -41,16 +36,8 @@ func (s *Server) routes() http.Handler {
 	))
 
 	q := sqlc.New(s.pool)
-	accounts := user.NewService(user.NewRepository(q))
-	sessions := auth.NewHandler(auth.NewService(accounts, auth.NewRepository(s.rdb), s.cfg.Auth), s.cfg.Auth, s.log)
 	orders := order.NewHandler(order.NewService(order.NewRepository(q)), s.log)
-
-	sessions.RegisterPublic(r)
-	r.Group(func(r chi.Router) {
-		r.Use(sessions.RequireAuthMiddleware)
-		sessions.RegisterAuthed(r)
-		orders.Register(r)
-	})
+	orders.Register(r)
 
 	return r
 }

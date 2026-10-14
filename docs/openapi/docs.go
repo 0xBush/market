@@ -35,47 +35,35 @@ const docTemplate = `{
                 }
             }
         },
-        "/login": {
-            "post": {
-                "description": "Set access/refresh cookies",
-                "consumes": [
-                    "application/json"
-                ],
+        "/orders": {
+            "get": {
+                "description": "List orders",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "orders"
                 ],
-                "summary": "Login",
+                "summary": "List orders",
                 "parameters": [
                     {
-                        "description": "Credentials",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.credentialsRequest"
-                        }
+                        "type": "integer",
+                        "description": "Page size (1-100, default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
+                            "$ref": "#/definitions/order.OrderList"
                         }
                     },
                     "422": {
@@ -91,93 +79,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/logout": {
-            "post": {
-                "description": "Revoke refresh token and clear cookies",
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Logout",
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    }
-                }
-            }
-        },
-        "/me": {
-            "get": {
-                "description": "Return the account for the access cookie",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Current user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.User"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    }
-                }
-            }
-        },
-        "/orders": {
-            "get": {
-                "description": "List orders belonging to the current user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "List orders",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/order.OrderList"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    }
-                }
             },
             "post": {
-                "description": "Create a new order for the current user",
+                "description": "Create an order",
                 "consumes": [
                     "application/json"
                 ],
@@ -218,12 +122,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/httputil.ErrorBody"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
@@ -241,7 +139,7 @@ const docTemplate = `{
         },
         "/orders/{id}": {
             "get": {
-                "description": "Get an order by ID belonging to the current user",
+                "description": "Get an order by ID",
                 "produces": [
                     "application/json"
                 ],
@@ -271,12 +169,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/httputil.ErrorBody"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -294,7 +186,7 @@ const docTemplate = `{
         },
         "/readyz": {
             "get": {
-                "description": "Postgres and Redis answer ping",
+                "description": "Postgres answers ping",
                 "produces": [
                     "application/json"
                 ],
@@ -317,104 +209,9 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/refresh": {
-            "post": {
-                "description": "Rotate refresh cookie and set a new access cookie",
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Refresh",
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    }
-                }
-            }
-        },
-        "/register": {
-            "post": {
-                "description": "Create an account and set access/refresh cookies",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Register",
-                "parameters": [
-                    {
-                        "description": "Credentials",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.credentialsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/user.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httputil.ErrorBody"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "auth.credentialsRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "httputil.ErrorBody": {
             "type": "object",
             "properties": {
@@ -451,9 +248,6 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -475,20 +269,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "user.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
         }
     }
 }`
@@ -500,7 +280,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Market API",
-	Description:      "Marketplace REST API. Access JWT and refresh token are HttpOnly cookies.",
+	Description:      "Marketplace REST API",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

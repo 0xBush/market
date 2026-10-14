@@ -1,16 +1,16 @@
 -- name: CreateOrder :one
-INSERT INTO orders (name, quantity, user_id)
-VALUES (sqlc.arg(name), sqlc.arg(quantity), sqlc.arg(user_id))
-RETURNING id, name, quantity, created_at, updated_at, user_id;
+INSERT INTO orders (name, quantity)
+VALUES (sqlc.arg(name), sqlc.arg(quantity))
+RETURNING id, name, quantity, created_at, updated_at;
 
 -- name: GetOrder :one
-SELECT id, name, quantity, created_at, updated_at, user_id
+SELECT id, name, quantity, created_at, updated_at
 FROM orders
-WHERE id = sqlc.arg(id)
-  AND user_id = sqlc.arg(user_id);
+WHERE id = sqlc.arg(id);
 
 -- name: ListOrders :many
-SELECT id, name, quantity, created_at, updated_at, user_id
+SELECT id, name, quantity, created_at, updated_at
 FROM orders
-WHERE user_id = sqlc.arg(user_id)
-ORDER BY id;
+ORDER BY id
+LIMIT sqlc.arg(page_limit)
+OFFSET sqlc.arg(page_offset);

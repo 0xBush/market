@@ -2,8 +2,13 @@ package httputil
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+)
+
+var (
+	ErrInvalidJSON  = errors.New("invalid JSON body")
+	ErrBodyTooLarge = errors.New("request body too large")
 )
 
 type ErrorBody struct {
@@ -20,6 +25,14 @@ func WriteError(w http.ResponseWriter, status int, msg string) {
 	WriteJSON(w, status, ErrorBody{Error: msg})
 }
 
+func WriteReadError(w http.ResponseWriter, err error) {
+	if errors.Is(err, ErrBodyTooLarge) {
+		WriteError(w, http.StatusRequestEntityTooLarge, err.Error())
+		return
+	}
+	WriteError(w, http.StatusBadRequest, ErrInvalidJSON.Error())
+}
+
 func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	const limit = 1 << 20
 
@@ -28,7 +41,10 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(dst); err != nil {
-		return fmt.Errorf("invalid JSON body: %w", err)
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return ErrBodyTooLarge
+		}
+		return ErrInvalidJSON
 	}
 
 	return nil

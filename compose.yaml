@@ -3,8 +3,6 @@ x-app: &app
   image: market:local
   environment:
     DATABASE_URL: postgres://market:market@postgres:5432/market?sslmode=disable
-    REDIS_URL: redis://valkey:6379/0
-    JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
     HTTP_ADDR: ":8080"
   depends_on: &depends-postgres
     postgres:
@@ -27,19 +25,6 @@ services:
       timeout: 5s
       retries: 10
 
-  valkey:
-    image: valkey/valkey:8-alpine
-    command: ["valkey-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - valkeydata:/data
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 2s
-      timeout: 5s
-      retries: 10
-
   migrate:
     <<: *app
     entrypoint: ["/migrate"]
@@ -51,11 +36,8 @@ services:
       - "8080:8080"
     depends_on:
       <<: *depends-postgres
-      valkey:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
 
 volumes:
   pgdata:
-  valkeydata:
